@@ -99,6 +99,30 @@ describe('Logger', () => {
     logger.destroy();
   });
 
+  it('handles a request id', () => {
+    const logger = new Logger({service: 'service', isProduction: true});
+
+    logger.info({
+      message: 'Message',
+      requestId: '123'
+    });
+
+    const stdoutCalls = process.stdout.write.mock.calls.map(call =>
+      JSON.parse(call[0])
+    );
+
+    expect(stdoutCalls).toMatchObject([
+      {
+        level: 'INFO',
+        message: 'Message',
+        requestId: '123',
+        service: 'service'
+      }
+    ]);
+
+    logger.destroy();
+  });
+
   it('throws when no service name is provided', () => {
     expect(() => new Logger()).toThrow(/`service` is mandatory/);
   });
