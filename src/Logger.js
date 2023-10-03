@@ -118,7 +118,7 @@ export default class Logger {
 
   formatJSONMessage(opts) {
     const now = new Date();
-    const {name: logger_name, ...meta} = opts.meta || {};
+    const {name: logger_name, requestId, ...meta} = opts.meta || {};
     const hasMeta = Object.keys(meta).length > 0;
 
     return JSON.stringify({
@@ -129,7 +129,8 @@ export default class Logger {
       logger_name,
       message: opts.message,
       meta: hasMeta ? meta : undefined,
-      stack_trace: hasMeta && meta.stack ? meta.stack.join('\n') : undefined
+      stack_trace: hasMeta && meta.stack ? meta.stack.join('\n') : undefined,
+      requestId
     });
   }
 

@@ -1,8 +1,9 @@
 # molindo-node-logger
 
-A node.js logger that integrates well with the Molindo infrastructure.
+A Node.js logger that integrates well with the Molindo infrastructure.
 
 ## Features
+
  - Pretty prints messages in development mode.
  - Prints JSON messages in production mode.
  - Errors are printed to `stderr`, while all other levels are printed to `stdout`.
