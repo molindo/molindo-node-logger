@@ -1,6 +1,6 @@
+import bodyParser from 'body-parser';
 import {Router} from 'express';
 import expressWinston from 'express-winston';
-import bodyParser from 'body-parser';
 
 expressWinston.responseWhitelist.push('body');
 

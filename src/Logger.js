@@ -88,8 +88,8 @@ export default class Logger {
   }
 
   createLogMethods() {
-    Object.keys(this.levels).forEach(level => {
-      this[level.toLowerCase()] = message => {
+    Object.keys(this.levels).forEach((level) => {
+      this[level.toLowerCase()] = (message) => {
         let meta;
 
         // Log functions can be passed an object to provide
@@ -105,7 +105,7 @@ export default class Logger {
     });
   }
 
-  onUnhandledException = e => {
+  onUnhandledException = (e) => {
     this.winston[this.getLevelsDescending()[0]](e.stack);
     process.exit(1);
   };
@@ -113,7 +113,7 @@ export default class Logger {
   getLevelsDescending() {
     return Object.entries(this.levels)
       .sort((a, b) => b[1] - a[1])
-      .map(entry => entry[0]);
+      .map((entry) => entry[0]);
   }
 
   formatJSONMessage(opts) {

@@ -89,12 +89,12 @@ describe('Logger', () => {
       name: 'cook'
     });
 
-    const stdoutCalls = process.stdout.write.mock.calls.map(call =>
+    const stdoutCalls = process.stdout.write.mock.calls.map((call) =>
       JSON.parse(call[0])
     );
 
-    expect(stdoutCalls[0]['logger_name']).toBe('cook');
-    expect(stdoutCalls[1]['logger_name']).toBe('cook');
+    expect(stdoutCalls[0].logger_name).toBe('cook');
+    expect(stdoutCalls[1].logger_name).toBe('cook');
 
     logger.destroy();
   });

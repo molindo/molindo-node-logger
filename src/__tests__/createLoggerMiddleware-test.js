@@ -3,7 +3,7 @@ import supertest from 'supertest';
 import Logger from '../Logger';
 import createLoggerMiddleware from '../createLoggerMiddleware';
 
-const createServer = logger => {
+function createServer(logger) {
   const server = express();
 
   server.use(createLoggerMiddleware({logger}));
@@ -36,7 +36,7 @@ const createServer = logger => {
     }
   });
   return server;
-};
+}
 
 const mockGraphQLPayload = {
   operationName: 'createPizza',
@@ -70,15 +70,13 @@ describe('createLoggerMiddleware', () => {
 
     await supertest(server).get('/');
     await supertest(server).get('/404');
-    await supertest(server)
-      .post('/graphql')
-      .send(mockGraphQLPayload);
+    await supertest(server).post('/graphql').send(mockGraphQLPayload);
     await supertest(server)
       .post('/graphql')
       .send({...mockGraphQLPayload, operationName: 'error'});
     await supertest(server).get('/500');
 
-    const stdoutCalls = process.stdout.write.mock.calls.map(call => call[0]);
+    const stdoutCalls = process.stdout.write.mock.calls.map((call) => call[0]);
     expect(stdoutCalls[0]).toMatch(
       /DEBUG: HTTP GET \/ statusCode=200,.*url=\//
     );
@@ -89,7 +87,7 @@ describe('createLoggerMiddleware', () => {
       /DEBUG: HTTP POST \/graphql statusCode=200,.*url=\/graphql/
     );
 
-    const stderrCalls = process.stderr.write.mock.calls.map(call => call[0]);
+    const stderrCalls = process.stderr.write.mock.calls.map((call) => call[0]);
     expect(stderrCalls[0]).toMatch(
       /ERROR: HTTP POST \/graphql statusCode=500[\s\S]*url=\/graphql/
     );
@@ -106,15 +104,13 @@ describe('createLoggerMiddleware', () => {
 
     await supertest(server).get('/');
     await supertest(server).get('/404');
-    await supertest(server)
-      .post('/graphql')
-      .send(mockGraphQLPayload);
+    await supertest(server).post('/graphql').send(mockGraphQLPayload);
     await supertest(server)
       .post('/graphql')
       .send({...mockGraphQLPayload, operationName: 'error'});
     await supertest(server).get('/500');
 
-    const stdoutCalls = process.stdout.write.mock.calls.map(call =>
+    const stdoutCalls = process.stdout.write.mock.calls.map((call) =>
       JSON.parse(call[0])
     );
 
@@ -146,7 +142,7 @@ describe('createLoggerMiddleware', () => {
       variables: {pizza: {toppings: ['salami']}}
     });
 
-    const stderrCalls = process.stderr.write.mock.calls.map(call =>
+    const stderrCalls = process.stderr.write.mock.calls.map((call) =>
       JSON.parse(call[0])
     );
     expect(stderrCalls[0].level).toBe('ERROR');
@@ -176,23 +172,21 @@ describe('createLoggerMiddleware', () => {
     const logger = new Logger({service: 'pizza-shop', isProduction: true});
     const server = createServer(logger);
 
-    await supertest(server)
-      .get('/')
-      .set({
-        cookie: 'JSESSIONID=1234567890',
-        'accept-language': 'en-US,en;q=0.8,de;q=0.6,la;q=0.4',
-        authorization: 'Bearer cn389ncoiwuencr',
-        accept: 'application/hal+json, application/json',
-        'x-requested-with': 'XMLHttpRequest'
-      });
+    await supertest(server).get('/').set({
+      cookie: 'JSESSIONID=1234567890',
+      'accept-language': 'en-US,en;q=0.8,de;q=0.6,la;q=0.4',
+      authorization: 'Bearer cn389ncoiwuencr',
+      accept: 'application/hal+json, application/json',
+      'x-requested-with': 'XMLHttpRequest'
+    });
 
     const output = JSON.parse(process.stdout.write.mock.calls[0][0]);
     const {headers} = output.meta.req;
     expect(headers['accept-language']).toBe('en-US,en;q=0.8,de;q=0.6,la;q=0.4');
-    expect(headers['accept']).toBe('application/hal+json, application/json');
+    expect(headers.accept).toBe('application/hal+json, application/json');
     expect(headers['x-requested-with']).toBe('XMLHttpRequest');
-    expect(headers['cookie']).toBe('*****');
-    expect(headers['authorization']).toBe('*****');
+    expect(headers.cookie).toBe('*****');
+    expect(headers.authorization).toBe('*****');
 
     logger.destroy();
   });
