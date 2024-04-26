@@ -1,11 +1,14 @@
+/* eslint-disable no-console */
+import {it, vi, expect, beforeEach, describe, afterEach} from 'vitest';
 import Logger from '../Logger';
 
 describe('Logger', () => {
-  const originalStdout = process.stdout.write;
-  const originalStderr = process.stderr.write;
+  const originalStdout = console._stdout.write;
+  const originalStderr = console._stderr.write;
+
   beforeEach(() => {
-    process.stdout.write = jest.fn();
-    process.stderr.write = jest.fn();
+    console._stdout.write = vi.fn();
+    console._stderr.write = vi.fn();
   });
 
   it('logs plain messages in development', () => {
@@ -21,13 +24,13 @@ describe('Logger', () => {
     logger.warn("don't forget to get it out in time");
     logger.error('pizza is burned!');
 
-    expect(process.stdout.write.mock.calls).toEqual([
+    expect(console._stdout.write.mock.calls).toEqual([
       ['TRACE: making a salami pizza\n'],
       ['DEBUG: adding salami\n'],
       ['INFO: putting it in the oven\n'],
       ["WARN: don't forget to get it out in time\n"]
     ]);
-    expect(process.stderr.write.mock.calls).toEqual([
+    expect(console._stderr.write.mock.calls).toEqual([
       ['ERROR: pizza is burned!\n']
     ]);
 
@@ -42,8 +45,8 @@ describe('Logger', () => {
     logger.warn("don't forget to get it out in time");
     logger.error('pizza is burned!');
 
-    expect(process.stdout.write.mock.calls.length).toBe(2);
-    expect(process.stderr.write.mock.calls.length).toBe(1);
+    expect(console._stdout.write.mock.calls.length).toBe(2);
+    expect(console._stderr.write.mock.calls.length).toBe(1);
 
     logger.destroy();
   });
@@ -56,8 +59,8 @@ describe('Logger', () => {
     logger.warn("don't forget to get it out in time");
     logger.error('pizza is burned!');
 
-    expect(process.stdout.write.mock.calls.length).toBe(4);
-    expect(process.stderr.write.mock.calls.length).toBe(1);
+    expect(console._stdout.write.mock.calls.length).toBe(4);
+    expect(console._stderr.write.mock.calls.length).toBe(1);
 
     logger.destroy();
   });
@@ -66,7 +69,8 @@ describe('Logger', () => {
     const logger = new Logger({service: 'pizza-shop', isProduction: true});
     logger.info('pizza is ready!');
 
-    const output = JSON.parse(process.stdout.write.mock.calls[0][0]);
+    const output = JSON.parse(console._stdout.write.mock.calls[0][0]);
+    console.log(output);
     expect(typeof output['@timestamp']).toBe('string');
     expect(output['@timestamp']).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     expect(output.level).toBe('INFO');
@@ -89,7 +93,7 @@ describe('Logger', () => {
       name: 'cook'
     });
 
-    const stdoutCalls = process.stdout.write.mock.calls.map((call) =>
+    const stdoutCalls = console._stdout.write.mock.calls.map((call) =>
       JSON.parse(call[0])
     );
 
@@ -99,12 +103,36 @@ describe('Logger', () => {
     logger.destroy();
   });
 
+  it('handles a request id', () => {
+    const logger = new Logger({service: 'service', isProduction: true});
+
+    logger.info({
+      message: 'Message',
+      requestId: '123'
+    });
+
+    const stdoutCalls = console._stdout.write.mock.calls.map((call) =>
+      JSON.parse(call[0])
+    );
+
+    expect(stdoutCalls).toMatchObject([
+      {
+        level: 'INFO',
+        message: 'Message',
+        requestId: '123',
+        service: 'service'
+      }
+    ]);
+
+    logger.destroy();
+  });
+
   it('throws when no service name is provided', () => {
     expect(() => new Logger()).toThrow(/`service` is mandatory/);
   });
 
   afterEach(() => {
-    process.stdout.write = originalStdout;
-    process.stderr.write = originalStderr;
+    console._stdout.write = originalStdout;
+    console._stderr.write = originalStderr;
   });
 });

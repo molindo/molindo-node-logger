@@ -62,36 +62,25 @@ export default class Logger {
       return acc;
     }, {});
 
-    this.winston = new winston.Logger({
+    this.winston = winston.createLogger({
       transports: [
         new winston.transports.Console({
-          stderrLevels: this.stderrLevels,
-          handleExceptions: false,
-          colorize: this.colorize,
-          formatter: this.isProduction
-            ? (...args) => this.formatJSONMessage(...args)
-            : undefined,
-          level: this.level
+          stderrLevels: this.stderrLevels
         })
       ],
+      format: this.format(),
+      level: this.level,
       levels: this.winstonLevels,
-      colors: this.colors
+      handleExceptions: true
+      // exitOnError: this.exitOnError
     });
-
-    // winston doesn't allow to set the error level for runtime
-    // exceptions, therefore this should be handled outside of winston.
-    // https://github.com/winstonjs/winston/blob/bd06c4091e9e248e6fed6278e0699e5cfdc7de24/lib/winston/exception-handler.js#L94-L97
-    process.on('uncaughtException', this.onUnhandledException);
-
-    // Unhandled promise rejections should be treated as errors.
-    process.on('unhandledRejection', this.onUnhandledException);
   }
 
   createLogMethods() {
     Object.keys(this.levels).forEach((level) => {
       this[level.toLowerCase()] = (message) => {
+        // console.log({message});
         let meta;
-
         // Log functions can be passed an object to provide
         // additional meta data like a logger `name`.
         if (typeof message === 'object') {
@@ -105,9 +94,9 @@ export default class Logger {
     });
   }
 
-  onUnhandledException = (e) => {
+  exitOnError = (e) => {
     this.winston[this.getLevelsDescending()[0]](e.stack);
-    process.exit(1);
+    return true;
   };
 
   getLevelsDescending() {
@@ -116,26 +105,72 @@ export default class Logger {
       .map((entry) => entry[0]);
   }
 
-  formatJSONMessage(opts) {
-    const now = new Date();
-    const {name: logger_name, ...meta} = opts.meta || {};
-    const hasMeta = Object.keys(meta).length > 0;
+  getMetaFromInfo(info) {
+    let meta = {};
+    const splat = info[Symbol.for('splat')];
 
-    return JSON.stringify({
-      service: this.service,
-      '@timestamp': now.toISOString(),
-      level: opts.level,
-      level_value: this.levels[opts.level],
-      logger_name,
-      message: opts.message,
-      meta: hasMeta ? meta : undefined,
-      stack_trace: hasMeta && meta.stack ? meta.stack.join('\n') : undefined
-    });
+    if (splat && Array.isArray(splat) && splat.length === 1) {
+      meta = {...splat[0]};
+    }
+
+    meta = {...meta, ...info.meta};
+
+    return meta;
+  }
+
+  format() {
+    const formats = [];
+
+    if (this.colorize && !this.isProduction) {
+      formats.push(this.formatColorize());
+    }
+
+    if (this.isProduction) {
+      formats.push(this.formatJson());
+    } else {
+      formats.push(winston.format.simple());
+    }
+
+    return winston.format.combine(...formats);
+  }
+
+  formatJson() {
+    return winston.format((info) => {
+      const now = new Date();
+      const infoMeta = this.getMetaFromInfo(info);
+
+      const {name: logger_name, requestId, ...meta} = infoMeta || {};
+      const hasMeta = Object.keys(meta).length > 0;
+
+      const log = {
+        level: info.level,
+        message: info.message,
+        service: this.service,
+        '@timestamp': now.toISOString(),
+        level_value: this.levels[info.level],
+        logger_name,
+        meta: hasMeta ? meta : undefined,
+        stack_trace: hasMeta && meta.stack ? meta.stack.join('\n') : undefined,
+        requestId
+      };
+
+      // info[Symbol.for('level')] = info.level;
+      // info[Symbol.for('splat')] = info.meta;
+      try {
+        info[Symbol.for('message')] = JSON.stringify(log);
+      } catch (e) {
+        // Do nothing but return info at the end without the MESSAGE property
+      }
+
+      return {...info, ...log};
+    })();
+  }
+
+  formatColorize() {
+    return winston.format.colorize({colors: this.colors});
   }
 
   destroy() {
-    process.removeListener('uncaughtException', this.onUnhandledException);
-    process.removeListener('unhandledRejection', this.onUnhandledException);
     this.winston = null;
   }
 }
