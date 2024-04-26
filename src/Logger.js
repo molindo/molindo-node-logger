@@ -1,4 +1,5 @@
 import winston from 'winston';
+import stringifyObject from './utils/stringifyObject';
 
 /**
  * A small wrapper around winston for consistent configuration.
@@ -71,15 +72,14 @@ export default class Logger {
       format: this.format(),
       level: this.level,
       levels: this.winstonLevels,
-      handleExceptions: true
-      // exitOnError: this.exitOnError
+      handleExceptions: true,
+      exitOnError: this.exitOnError
     });
   }
 
   createLogMethods() {
     Object.keys(this.levels).forEach((level) => {
       this[level.toLowerCase()] = (message) => {
-        // console.log({message});
         let meta;
         // Log functions can be passed an object to provide
         // additional meta data like a logger `name`.
@@ -88,8 +88,8 @@ export default class Logger {
           delete meta.message;
           message = message.message;
         }
-
-        this.winston.log(level, message, meta);
+        // Pass the meta object as actual `meta` object
+        this.winston.log(level, message, {meta});
       };
     });
   }
@@ -105,19 +105,6 @@ export default class Logger {
       .map((entry) => entry[0]);
   }
 
-  getMetaFromInfo(info) {
-    let meta = {};
-    const splat = info[Symbol.for('splat')];
-
-    if (splat && Array.isArray(splat) && splat.length === 1) {
-      meta = {...splat[0]};
-    }
-
-    meta = {...meta, ...info.meta};
-
-    return meta;
-  }
-
   format() {
     const formats = [];
 
@@ -128,7 +115,7 @@ export default class Logger {
     if (this.isProduction) {
       formats.push(this.formatJson());
     } else {
-      formats.push(winston.format.simple());
+      formats.push(this.formatSimple());
     }
 
     return winston.format.combine(...formats);
@@ -137,9 +124,8 @@ export default class Logger {
   formatJson() {
     return winston.format((info) => {
       const now = new Date();
-      const infoMeta = this.getMetaFromInfo(info);
 
-      const {name: logger_name, requestId, ...meta} = infoMeta || {};
+      const {name: logger_name, requestId, ...meta} = info.meta || {};
       const hasMeta = Object.keys(meta).length > 0;
 
       const log = {
@@ -154,15 +140,24 @@ export default class Logger {
         requestId
       };
 
-      // info[Symbol.for('level')] = info.level;
-      // info[Symbol.for('splat')] = info.meta;
-      try {
-        info[Symbol.for('message')] = JSON.stringify(log);
-      } catch (e) {
-        // Do nothing but return info at the end without the MESSAGE property
+      info[Symbol.for('message')] = JSON.stringify(log);
+
+      return info;
+    })();
+  }
+
+  formatSimple() {
+    return winston.format((info) => {
+      const {meta} = info;
+
+      let message = `${info.level}: ${info.message}`;
+      if (meta) {
+        message = `${message} ${stringifyObject(meta)}`;
       }
 
-      return {...info, ...log};
+      info[Symbol.for('message')] = message;
+
+      return info;
     })();
   }
 

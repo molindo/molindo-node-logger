@@ -76,26 +76,28 @@ describe('createLoggerMiddleware', () => {
     await supertest(server)
       .post('/graphql')
       .send({...mockGraphQLPayload, operationName: 'error'});
+
     await supertest(server).get('/500');
 
     const stdoutCalls = console._stdout.write.mock.calls.map((call) => call[0]);
     expect(stdoutCalls[0]).toMatch(
-      /DEBUG: HTTP GET \/ statusCode=200,.*url=\//
+      /DEBUG: HTTP GET \/ url=\/.*statusCode=200,/
     );
-    // expect(stdoutCalls[1]).toMatch(
-    //   /WARN: HTTP GET \/404 statusCode=404,[\s\S]*url=\/404/
-    // );
-    // expect(stdoutCalls[2]).toMatch(
-    //   /DEBUG: HTTP POST \/graphql statusCode=200,.*url=\/graphql/
-    // );
+    expect(stdoutCalls[1]).toMatch(
+      /WARN: HTTP GET \/404 url=\/404,[\s\S]*statusCode=404/
+    );
+    expect(stdoutCalls[2]).toMatch(
+      /DEBUG: HTTP POST \/graphql url=\/graphql,.*statusCode=200/
+    );
 
-    // const stderrCalls = console._stderr.write.mock.calls.map((call) => call[0]);
-    // expect(stderrCalls[0]).toMatch(
-    //   /ERROR: HTTP POST \/graphql statusCode=500[\s\S]*url=\/graphql/
-    // );
-    // expect(stderrCalls[1]).toMatch(
-    //   /ERROR: HTTP GET \/500 statusCode=500[\s\S]*url=\/500/
-    // );
+    const stderrCalls = console._stderr.write.mock.calls.map((call) => call[0]);
+
+    expect(stderrCalls[0]).toMatch(
+      /ERROR: HTTP POST \/graphql url=\/graphql[\s\S]*statusCode=500/
+    );
+    expect(stderrCalls[1]).toMatch(
+      /ERROR: HTTP GET \/500 url=\/500[\s\S]*statusCode=500/
+    );
 
     logger.destroy();
   });
