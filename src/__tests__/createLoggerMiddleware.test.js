@@ -57,11 +57,11 @@ describe('createLoggerMiddleware', () => {
   const originalStderr = console._stderr.write;
 
   beforeEach(() => {
-    // console._stdout.write = vi.fn();
-    // console._stderr.write = vi.fn();
+    console._stdout.write = vi.fn();
+    console._stderr.write = vi.fn();
   });
 
-  it.only('logs plain messages in development', async () => {
+  it('logs plain messages in development', async () => {
     const logger = new Logger({
       service: 'pizza-shop',
       level: 'TRACE',
