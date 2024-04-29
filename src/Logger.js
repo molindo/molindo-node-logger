@@ -72,7 +72,7 @@ export default class Logger {
       format: this.format(),
       level: this.level,
       levels: this.winstonLevels,
-      handleExceptions: true,
+      handleExceptions: false,
       exitOnError: this.exitOnError
     });
   }
