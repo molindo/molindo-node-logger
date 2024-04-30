@@ -72,8 +72,7 @@ export default class Logger {
       ],
       format: this.format(),
       level: this.level,
-      levels: this.winstonLevels,
-      exitOnError: this.exitOnError
+      levels: this.winstonLevels
     });
   }
 
@@ -93,11 +92,6 @@ export default class Logger {
       };
     });
   }
-
-  exitOnError = (e) => {
-    this.winston[this.getLevelsDescending()[0]](e.stack);
-    return true;
-  };
 
   getLevelsDescending() {
     return Object.entries(this.levels)
