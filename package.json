@@ -1,8 +1,8 @@
 {
   "name": "molindo-node-logger",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "A node.js logger that integrates well with the Molindo infrastructure.",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "repository": "https://github.com/molindo/molindo-node-logger.git",
   "author": "Jan Amann <jam@molindo.at>",
   "license": "MIT",
@@ -14,19 +14,18 @@
   ],
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "default": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "yarn run lint && yarn run test -- --run && bunchee",
+    "build": "bunchee",
     "lint": "eslint src",
     "test": "vitest",
-    "test:watch": "npm run test -- --watch --onlyChanged",
-    "prepublish": "npm run lint && npm run test && rimraf ./lib && npm run build"
+    "prepublish": "yarn run lint && yarn run test -- --run && rimraf ./dist && npm run build"
   },
   "files": [
-    "lib"
+    "dist"
   ],
   "devDependencies": {
     "babel-jest": "21.2.0",

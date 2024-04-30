@@ -1,9 +1,13 @@
 # Changelog
 
-## 1.3.0
+## 2.0.0
 
 Update devDependencies and dependencies. Update to newest `winston` and
-`express-winston` and don't introduce breaking changes in our logger.
+`express-winston`. Adapt to breaking changes. ([#20](https://github.com/molindo/molindo-node-logger/pull/20))
+
+### Breaking Changes
+
+- Supported Node.js version changed to >= 20.
 
 ## 1.2.0
 
