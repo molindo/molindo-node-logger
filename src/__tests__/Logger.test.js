@@ -33,11 +33,9 @@ describe('Logger', () => {
     expect(console._stderr.write.mock.calls).toEqual([
       ['ERROR: pizza is burned!\n']
     ]);
-
-    logger.destroy();
   });
 
-  it('only logs infos, warnings and errors in development', () => {
+  it('logs all but trace in development', () => {
     const logger = new Logger({service: 'pizza-shop', isProduction: false});
     logger.trace('making a salami pizza');
     logger.debug('adding salami');
@@ -45,10 +43,8 @@ describe('Logger', () => {
     logger.warn("don't forget to get it out in time");
     logger.error('pizza is burned!');
 
-    expect(console._stdout.write.mock.calls.length).toBe(2);
+    expect(console._stdout.write.mock.calls.length).toBe(3);
     expect(console._stderr.write.mock.calls.length).toBe(1);
-
-    logger.destroy();
   });
 
   it('logs all levels in production', () => {
@@ -61,8 +57,6 @@ describe('Logger', () => {
 
     expect(console._stdout.write.mock.calls.length).toBe(4);
     expect(console._stderr.write.mock.calls.length).toBe(1);
-
-    logger.destroy();
   });
 
   it('logs json messages in production', () => {
@@ -70,15 +64,12 @@ describe('Logger', () => {
     logger.info('pizza is ready!');
 
     const output = JSON.parse(console._stdout.write.mock.calls[0][0]);
-    console.log(output);
     expect(typeof output['@timestamp']).toBe('string');
     expect(output['@timestamp']).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     expect(output.level).toBe('INFO');
     expect(output.level_value).toBe(20000);
     expect(output.message).toBe('pizza is ready!');
     expect(output.service).toBe('pizza-shop');
-
-    logger.destroy();
   });
 
   it('overloads the log functions to provide a logger name', () => {
@@ -99,8 +90,6 @@ describe('Logger', () => {
 
     expect(stdoutCalls[0].logger_name).toBe('cook');
     expect(stdoutCalls[1].logger_name).toBe('cook');
-
-    logger.destroy();
   });
 
   it('handles a request id', () => {
@@ -123,8 +112,6 @@ describe('Logger', () => {
         service: 'service'
       }
     ]);
-
-    logger.destroy();
   });
 
   it('throws when no service name is provided', () => {

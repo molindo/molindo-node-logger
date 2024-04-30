@@ -98,8 +98,6 @@ describe('createLoggerMiddleware', () => {
     expect(stderrCalls[1]).toMatch(
       /ERROR: HTTP GET \/500 url=\/500[\s\S]*statusCode=500/
     );
-
-    logger.destroy();
   });
 
   it('logs json messages in production', async () => {
@@ -168,8 +166,6 @@ describe('createLoggerMiddleware', () => {
       data: null
     });
     expect(stderrCalls[1].level).toBe('ERROR');
-
-    logger.destroy();
   });
 
   it('masks confidential headers', async () => {
@@ -191,8 +187,6 @@ describe('createLoggerMiddleware', () => {
     expect(headers['x-requested-with']).toBe('XMLHttpRequest');
     expect(headers.cookie).toBe('*****');
     expect(headers.authorization).toBe('*****');
-
-    logger.destroy();
   });
 
   afterEach(() => {

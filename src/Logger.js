@@ -49,7 +49,7 @@ export default class Logger {
       if (this.isProduction) {
         this.level = this.getLevelsDescending().slice(-1)[0];
       } else {
-        this.level = this.getLevelsDescending().slice(2)[0];
+        this.level = this.getLevelsDescending().slice(3)[0];
       }
     }
   }
@@ -66,13 +66,13 @@ export default class Logger {
     this.winston = winston.createLogger({
       transports: [
         new winston.transports.Console({
-          stderrLevels: this.stderrLevels
+          stderrLevels: this.stderrLevels,
+          handleExceptions: false
         })
       ],
       format: this.format(),
       level: this.level,
       levels: this.winstonLevels,
-      handleExceptions: false,
       exitOnError: this.exitOnError
     });
   }
@@ -115,7 +115,7 @@ export default class Logger {
     if (this.isProduction) {
       formats.push(this.formatJson());
     } else {
-      formats.push(this.formatSimple());
+      formats.push(this.formatInline());
     }
 
     return winston.format.combine(...formats);
@@ -146,7 +146,7 @@ export default class Logger {
     })();
   }
 
-  formatSimple() {
+  formatInline() {
     return winston.format((info) => {
       const {meta} = info;
 
@@ -163,9 +163,5 @@ export default class Logger {
 
   formatColorize() {
     return winston.format.colorize({colors: this.colors});
-  }
-
-  destroy() {
-    this.winston = null;
   }
 }
