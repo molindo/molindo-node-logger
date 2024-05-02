@@ -1,3 +1,4 @@
+import {it, expect} from 'vitest';
 import * as index from '../index';
 
 it('exports all necessary modules', () => {

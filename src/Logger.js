@@ -1,4 +1,5 @@
 import winston from 'winston';
+import stringifyObject from './utils/stringifyObject';
 
 /**
  * A small wrapper around winston for consistent configuration.
@@ -48,7 +49,7 @@ export default class Logger {
       if (this.isProduction) {
         this.level = this.getLevelsDescending().slice(-1)[0];
       } else {
-        this.level = this.getLevelsDescending().slice(2)[0];
+        this.level = this.getLevelsDescending().slice(3)[0];
       }
     }
   }
@@ -62,36 +63,23 @@ export default class Logger {
       return acc;
     }, {});
 
-    this.winston = new winston.Logger({
+    this.winston = winston.createLogger({
       transports: [
         new winston.transports.Console({
           stderrLevels: this.stderrLevels,
-          handleExceptions: false,
-          colorize: this.colorize,
-          formatter: this.isProduction
-            ? (...args) => this.formatJSONMessage(...args)
-            : undefined,
-          level: this.level
+          handleExceptions: false
         })
       ],
-      levels: this.winstonLevels,
-      colors: this.colors
+      format: this.format(),
+      level: this.level,
+      levels: this.winstonLevels
     });
-
-    // winston doesn't allow to set the error level for runtime
-    // exceptions, therefore this should be handled outside of winston.
-    // https://github.com/winstonjs/winston/blob/bd06c4091e9e248e6fed6278e0699e5cfdc7de24/lib/winston/exception-handler.js#L94-L97
-    process.on('uncaughtException', this.onUnhandledException);
-
-    // Unhandled promise rejections should be treated as errors.
-    process.on('unhandledRejection', this.onUnhandledException);
   }
 
   createLogMethods() {
-    Object.keys(this.levels).forEach(level => {
-      this[level.toLowerCase()] = message => {
+    Object.keys(this.levels).forEach((level) => {
+      this[level.toLowerCase()] = (message) => {
         let meta;
-
         // Log functions can be passed an object to provide
         // additional meta data like a logger `name`.
         if (typeof message === 'object') {
@@ -99,44 +87,75 @@ export default class Logger {
           delete meta.message;
           message = message.message;
         }
-
-        this.winston.log(level, message, meta);
+        // Pass the meta object as actual `meta` object
+        this.winston.log(level, message, {meta});
       };
     });
   }
 
-  onUnhandledException = e => {
-    this.winston[this.getLevelsDescending()[0]](e.stack);
-    process.exit(1);
-  };
-
   getLevelsDescending() {
     return Object.entries(this.levels)
       .sort((a, b) => b[1] - a[1])
-      .map(entry => entry[0]);
+      .map((entry) => entry[0]);
   }
 
-  formatJSONMessage(opts) {
-    const now = new Date();
-    const {name: logger_name, requestId, ...meta} = opts.meta || {};
-    const hasMeta = Object.keys(meta).length > 0;
+  format() {
+    const formats = [];
 
-    return JSON.stringify({
-      service: this.service,
-      '@timestamp': now.toISOString(),
-      level: opts.level,
-      level_value: this.levels[opts.level],
-      logger_name,
-      message: opts.message,
-      meta: hasMeta ? meta : undefined,
-      stack_trace: hasMeta && meta.stack ? meta.stack.join('\n') : undefined,
-      requestId
-    });
+    if (this.colorize && !this.isProduction) {
+      formats.push(this.formatColorize());
+    }
+
+    if (this.isProduction) {
+      formats.push(this.formatJson());
+    } else {
+      formats.push(this.formatInline());
+    }
+
+    return winston.format.combine(...formats);
   }
 
-  destroy() {
-    process.removeListener('uncaughtException', this.onUnhandledException);
-    process.removeListener('unhandledRejection', this.onUnhandledException);
-    this.winston = null;
+  formatJson() {
+    return winston.format((info) => {
+      const now = new Date();
+
+      const {name: logger_name, requestId, ...meta} = info.meta || {};
+      const hasMeta = Object.keys(meta).length > 0;
+
+      const log = {
+        level: info.level,
+        message: info.message,
+        service: this.service,
+        '@timestamp': now.toISOString(),
+        level_value: this.levels[info.level],
+        logger_name,
+        meta: hasMeta ? meta : undefined,
+        stack_trace: hasMeta && meta.stack ? meta.stack.join('\n') : undefined,
+        requestId
+      };
+
+      info[Symbol.for('message')] = JSON.stringify(log);
+
+      return info;
+    })();
+  }
+
+  formatInline() {
+    return winston.format((info) => {
+      const {meta} = info;
+
+      let message = `${info.level}: ${info.message}`;
+      if (meta) {
+        message = `${message} ${stringifyObject(meta)}`;
+      }
+
+      info[Symbol.for('message')] = message;
+
+      return info;
+    })();
+  }
+
+  formatColorize() {
+    return winston.format.colorize({colors: this.colors});
   }
 }
