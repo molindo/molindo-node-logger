@@ -8,6 +8,7 @@ Update devDependencies and dependencies. Update to newest `winston` and
 ### Breaking Changes
 
 - Supported Node.js version changed to >= 20.
+- Removed `destroy()` from `Logger` class.
 
 ## 1.2.0
 
