@@ -142,8 +142,7 @@ describe('createLoggerMiddleware', () => {
 
     expect(stdoutCalls[2].level).toBe('DEBUG');
     expect(stdoutCalls[2].meta.graphql).toEqual({
-      operationName: 'createPizza',
-      variables: {pizza: {toppings: ['salami']}}
+      operationName: 'createPizza'
     });
 
     const stderrCalls = process.stderr.write.mock.calls.map(call =>

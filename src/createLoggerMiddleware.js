@@ -33,8 +33,7 @@ export default ({logger}) => {
 
         if (req.method === 'POST' && req.body && req.body.operationName) {
           meta.graphql = {
-            operationName: req.body.operationName,
-            variables: req.body.variables
+            operationName: req.body.operationName
           };
         }
 
