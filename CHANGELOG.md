@@ -2,8 +2,8 @@
 
 ## 1.3.0
 
-Don't add `variables` to `meta.graphql` in the middleware logger. It is possible
-that `variables` is a big object that could bloat the payload.
+Don't add `variables` to `meta.graphql` in the middleware logger when disabled
+via `logGraphqlVariables: false`. It's possible that `variables` is a big object that could bloat the payload.
 
 ## 1.2.0
 
