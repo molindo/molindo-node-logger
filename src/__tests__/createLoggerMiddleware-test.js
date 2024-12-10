@@ -3,10 +3,10 @@ import supertest from 'supertest';
 import Logger from '../Logger';
 import createLoggerMiddleware from '../createLoggerMiddleware';
 
-const createServer = logger => {
+const createServer = (logger, {logGraphqlVariables = true} = {}) => {
   const server = express();
 
-  server.use(createLoggerMiddleware({logger}));
+  server.use(createLoggerMiddleware({logger, logGraphqlVariables}));
   server.get('/', (req, res) => res.json({success: true}));
   server.get('/500', () => {
     throw new Error('500');
@@ -142,7 +142,8 @@ describe('createLoggerMiddleware', () => {
 
     expect(stdoutCalls[2].level).toBe('DEBUG');
     expect(stdoutCalls[2].meta.graphql).toEqual({
-      operationName: 'createPizza'
+      operationName: 'createPizza',
+      variables: {pizza: {toppings: ['salami']}}
     });
 
     const stderrCalls = process.stderr.write.mock.calls.map(call =>
@@ -166,7 +167,31 @@ describe('createLoggerMiddleware', () => {
       ],
       data: null
     });
+
     expect(stderrCalls[1].level).toBe('ERROR');
+
+    logger.destroy();
+  });
+
+  it('does not log graphql variables when disabled', async () => {
+    const logger = new Logger({service: 'pizza-shop', isProduction: true});
+    const server = createServer(logger, {logGraphqlVariables: false});
+
+    await supertest(server).get('/');
+    await supertest(server).get('/404');
+
+    await supertest(server)
+      .post('/graphql')
+      .send(mockGraphQLPayload);
+
+    const stdoutCalls = process.stdout.write.mock.calls.map(call =>
+      JSON.parse(call[0])
+    );
+
+    expect(stdoutCalls[2].level).toBe('DEBUG');
+    expect(stdoutCalls[2].meta.graphql).toEqual({
+      operationName: 'createPizza'
+    });
 
     logger.destroy();
   });

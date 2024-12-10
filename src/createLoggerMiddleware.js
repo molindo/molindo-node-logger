@@ -11,7 +11,7 @@ expressWinston.responseWhitelist.push('body');
 const MASKED_HEADERS = ['Cookie', 'cookie', 'Authorization', 'authorization'];
 const MASKED_HEADER_VALUE = '*****';
 
-export default ({logger}) => {
+export default ({logger, logGraphqlVariables = true}) => {
   const router = new Router();
   return router.use(
     bodyParser.json(),
@@ -33,7 +33,8 @@ export default ({logger}) => {
 
         if (req.method === 'POST' && req.body && req.body.operationName) {
           meta.graphql = {
-            operationName: req.body.operationName
+            operationName: req.body.operationName,
+            ...(logGraphqlVariables ? {variables: req.body.variables} : null)
           };
         }
 
