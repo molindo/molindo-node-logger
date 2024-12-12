@@ -3,11 +3,11 @@ import supertest from 'supertest';
 import Logger from '../Logger';
 import createLoggerMiddleware from '../createLoggerMiddleware';
 
-const createServer = (logger, {MAX_GRAPHQL_VARIABLES_LOG_LENGTH} = {}) => {
+const createServer = (logger, {maxGraphQLVariablesLength} = {}) => {
   const server = express();
 
   server.use(
-    createLoggerMiddleware({logger, MAX_GRAPHQL_VARIABLES_LOG_LENGTH})
+    createLoggerMiddleware({logger, maxGraphQLVariablesLength})
   );
   server.get('/', (req, res) => res.json({success: true}));
   server.get('/500', () => {
@@ -177,7 +177,7 @@ describe('createLoggerMiddleware', () => {
 
   it('does not log graphql variables when disabled', async () => {
     const logger = new Logger({service: 'pizza-shop', isProduction: true});
-    const server = createServer(logger, {MAX_GRAPHQL_VARIABLES_LOG_LENGTH: 12});
+    const server = createServer(logger, {maxGraphQLVariablesLength: 12});
 
     await supertest(server).get('/');
     await supertest(server).get('/404');

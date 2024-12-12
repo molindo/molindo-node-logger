@@ -42,9 +42,10 @@ In production, printed JSON will look like this (except that it's not pretty pri
 If you're running an express server, you can register the logger middleware to
 log HTTP requests. GraphQL requests get automatically detected and attached as
 `meta.graphql`, with properties `operationName` and the respective `variables`.
-To limit the size of the logged variables, you can pass a
-`MAX_GRAPHQL_VARIABLES_LOG_LENGTH` (default `512`) parameter to
-`createLoggerMiddleware({logger, MAX_GRAPHQL_VARIABLES_LOG_LENGTH=128})`. 
+To limit the size of the pyload for the logged variables, you can pass a
+`maxGraphQLVariablesLength` (default `512`) parameter to
+`createLoggerMiddleware({logger, maxGraphQLVariablesLength=128})`. Setting it
+to `maxGraphQLVariablesLength=0` disables the limit.
 
 ```js
 import express from 'express';
