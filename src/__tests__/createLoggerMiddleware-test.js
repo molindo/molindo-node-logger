@@ -197,9 +197,32 @@ describe('createLoggerMiddleware', () => {
     logger.destroy();
   });
 
-  it('logs all `variables` when maxGraphQLVariablesLength = 0', async () => {
+  it('does not log `variables` when maxGraphQLVariablesLength = 0', async () => {
     const logger = new Logger({service: 'pizza-shop', isProduction: true});
     const server = createServer(logger, {maxGraphQLVariablesLength: 0});
+
+    await supertest(server).get('/');
+    await supertest(server).get('/404');
+
+    await supertest(server)
+      .post('/graphql')
+      .send(mockGraphQLPayload);
+
+    const stdoutCalls = process.stdout.write.mock.calls.map(call =>
+      JSON.parse(call[0])
+    );
+
+    expect(stdoutCalls[2].level).toBe('DEBUG');
+    expect(stdoutCalls[2].meta.graphql).toEqual({
+      operationName: 'createPizza'
+    });
+
+    logger.destroy();
+  });
+
+  it('logs all `variables` when maxGraphQLVariablesLength = -1', async () => {
+    const logger = new Logger({service: 'pizza-shop', isProduction: true});
+    const server = createServer(logger, {maxGraphQLVariablesLength: -1});
 
     await supertest(server).get('/');
     await supertest(server).get('/404');

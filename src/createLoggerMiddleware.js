@@ -32,10 +32,16 @@ export default ({logger, maxGraphQLVariablesLength = 512}) => {
         const meta = {name: 'express'};
 
         if (req.method === 'POST' && req.body && req.body.operationName) {
-          let variables;
+          let variables = undefined;
 
-          if (maxGraphQLVariablesLength > 0) {
+          if (maxGraphQLVariablesLength === -1) {
+            variables = req.body.variables;
+          } else if (maxGraphQLVariablesLength === 0) {
+            // Keep variables undefined
+            variables = undefined;
+          } else if (maxGraphQLVariablesLength > 0) {
             const stringifiedVariables = JSON.stringify(req.body.variables);
+
             const isTooLarge =
               stringifiedVariables.length > maxGraphQLVariablesLength;
 
@@ -47,8 +53,6 @@ export default ({logger, maxGraphQLVariablesLength = 512}) => {
             } else {
               variables = req.body.variables;
             }
-          } else {
-            variables = req.body.variables;
           }
 
           meta.graphql = {
