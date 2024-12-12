@@ -34,7 +34,7 @@ export default ({logger, maxGraphQLVariablesLength = 512}) => {
         if (req.method === 'POST' && req.body && req.body.operationName) {
           let variables;
 
-          if (maxGraphQLVariablesLength >= 0) {
+          if (maxGraphQLVariablesLength > 0) {
             const stringifiedVariables = JSON.stringify(req.body.variables);
             const isTooLarge =
               stringifiedVariables.length > maxGraphQLVariablesLength;

@@ -6,9 +6,7 @@ import createLoggerMiddleware from '../createLoggerMiddleware';
 const createServer = (logger, {maxGraphQLVariablesLength} = {}) => {
   const server = express();
 
-  server.use(
-    createLoggerMiddleware({logger, maxGraphQLVariablesLength})
-  );
+  server.use(createLoggerMiddleware({logger, maxGraphQLVariablesLength}));
   server.get('/', (req, res) => res.json({success: true}));
   server.get('/500', () => {
     throw new Error('500');
@@ -175,7 +173,7 @@ describe('createLoggerMiddleware', () => {
     logger.destroy();
   });
 
-  it('does not log graphql variables when disabled', async () => {
+  it('reduces the log payload of `variables` to the desired maxGraphQLVariablesLength', async () => {
     const logger = new Logger({service: 'pizza-shop', isProduction: true});
     const server = createServer(logger, {maxGraphQLVariablesLength: 12});
 
@@ -194,6 +192,30 @@ describe('createLoggerMiddleware', () => {
     expect(stdoutCalls[2].meta.graphql).toEqual({
       operationName: 'createPizza',
       variables: '{"pizza":{"t […] max payload length reached (12 chars)'
+    });
+
+    logger.destroy();
+  });
+
+  it('logs all `variables` when maxGraphQLVariablesLength = 0', async () => {
+    const logger = new Logger({service: 'pizza-shop', isProduction: true});
+    const server = createServer(logger, {maxGraphQLVariablesLength: 0});
+
+    await supertest(server).get('/');
+    await supertest(server).get('/404');
+
+    await supertest(server)
+      .post('/graphql')
+      .send(mockGraphQLPayload);
+
+    const stdoutCalls = process.stdout.write.mock.calls.map(call =>
+      JSON.parse(call[0])
+    );
+
+    expect(stdoutCalls[2].level).toBe('DEBUG');
+    expect(stdoutCalls[2].meta.graphql).toEqual({
+      operationName: 'createPizza',
+      variables: {pizza: {toppings: ['salami']}}
     });
 
     logger.destroy();
