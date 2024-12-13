@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0
+
+Limit the size of logged `variables` for `meta.graphql` in the middleware logger
+via `maxGraphQLVariablesLength`. It's possible that `variables` is a big object that could bloat the payload.
+
 ## 2.0.0
 
 Update devDependencies and dependencies. Update to newest `winston` and

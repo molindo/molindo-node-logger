@@ -39,7 +39,9 @@ In production, printed JSON will look like this (except that it's not pretty pri
 
 ### Express integration
 
-If you're running an express server, you can register the logger middleware to log HTTP requests.
+If you're running an express server, you can register the logger middleware to
+log HTTP requests. GraphQL requests get automatically detected and attached as
+`meta.graphql`, with properties `operationName` and the respective `variables`.
 
 ```js
 import express from 'express';
@@ -50,3 +52,12 @@ const server = express();
 const logger = new Logger({ service: 'pizza-shop' });
 server.use(createLoggerMiddleware({ logger }));
 ```
+
+The size of `meta.graphql.variables` can sometimes grow too large to log
+effectively. To manage this, the `createLoggerMiddleware()` function provides a configurable parameter:
+`maxGraphQLVariablesLength`.
+
+#### Configuration maxGraphQLVariablesLength
+* Set `maxGraphQLVariablesLength` (default: 512), to set the maximum size of the `meta.graphql.variables` payload to be logged.
+* Set `maxGraphQLVariablesLength` to `0` to completely turn off logging for `meta.graphql.variables`.
+* Set `maxGraphQLVariablesLength` to `-1` to include the complete `meta.graphql.variables` payload without size restrictions.
