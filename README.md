@@ -54,7 +54,7 @@ server.use(createLoggerMiddleware({logger}));
 ```
 
 The size of `meta.graphql.variables` can sometimes grow too large to log
-effectively. To manage this, the middleware provides a configurable parameter:
+effectively. To manage this, the `createLoggerMiddleware()` function provides a configurable parameter:
 `maxGraphQLVariablesLength`.
 
 #### Configuration maxGraphQLVariablesLength
