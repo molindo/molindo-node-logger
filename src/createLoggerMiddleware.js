@@ -11,7 +11,7 @@ expressWinston.responseWhitelist.push('body');
 const MASKED_HEADERS = ['Cookie', 'cookie', 'Authorization', 'authorization'];
 const MASKED_HEADER_VALUE = '*****';
 
-export default ({logger}) => {
+export default ({logger, maxGraphQLVariablesLength = 512}) => {
   const router = new Router();
   return router.use(
     bodyParser.json(),
@@ -32,9 +32,32 @@ export default ({logger}) => {
         const meta = {name: 'express'};
 
         if (req.method === 'POST' && req.body && req.body.operationName) {
+          let variables = undefined;
+
+          if (maxGraphQLVariablesLength === -1) {
+            variables = req.body.variables;
+          } else if (maxGraphQLVariablesLength === 0) {
+            // Keep variables undefined
+            variables = undefined;
+          } else if (maxGraphQLVariablesLength > 0) {
+            const stringifiedVariables = JSON.stringify(req.body.variables);
+
+            const isTooLarge =
+              stringifiedVariables.length > maxGraphQLVariablesLength;
+
+            if (isTooLarge) {
+              variables = `${stringifiedVariables.substring(
+                0,
+                maxGraphQLVariablesLength
+              )} […] max payload length reached (${maxGraphQLVariablesLength} chars)`;
+            } else {
+              variables = req.body.variables;
+            }
+          }
+
           meta.graphql = {
             operationName: req.body.operationName,
-            variables: req.body.variables
+            variables
           };
         }
 
