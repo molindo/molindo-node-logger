@@ -57,7 +57,7 @@ The size of `meta.graphql.variables` can sometimes grow too large to log
 effectively. To manage this, the `createLoggerMiddleware()` function provides a configurable parameter:
 `maxGraphQLVariablesLength`.
 
-#### Configuration maxGraphQLVariablesLength
+#### Configuration of `maxGraphQLVariablesLength`
 * Set `maxGraphQLVariablesLength` (default: 512), to set the maximum size of the `meta.graphql.variables` payload to be logged.
 * Set `maxGraphQLVariablesLength` to `0` to completely turn off logging for `meta.graphql.variables`.
 * Set `maxGraphQLVariablesLength` to `-1` to include the complete `meta.graphql.variables` payload without size restrictions.
