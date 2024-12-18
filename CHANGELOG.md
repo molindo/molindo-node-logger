@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0
+
+Limit the size of logged `variables` for `meta.graphql` in the middleware logger
+via `maxGraphQLVariablesLength`. It's possible that `variables` is a big object that could bloat the payload.
+
+### Breaking Changes
+- The default length for `maxGraphQLVariablesLength` is `512`, which causes `meta.graphql.variables` to be truncated after `512` characters by default.
+
 ## 2.0.0
 
 Update devDependencies and dependencies. Update to newest `winston` and
